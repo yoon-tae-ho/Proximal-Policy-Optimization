@@ -17,7 +17,7 @@ def train():
     print("============================================================================================")
 
     ####### initialize environment hyperparameters ######
-    env_name = "taeho-car-13"
+    env_name = "taeho-car-14"
     env_path = f"./{env_name}"
 
     has_continuous_action_space = True  # continuous action space; else discrete
@@ -184,7 +184,10 @@ def train():
 
             # select action with policy
             action = ppo_agent.select_action(state)
+            action = np.expand_dims(action, axis=0)
             state, reward, done = env_next_step(env, behavior_name, action)
+
+            reward = np.squeeze(reward, axis=0)
 
             # saving reward and is_terminals
             ppo_agent.buffer.rewards.append(reward)
