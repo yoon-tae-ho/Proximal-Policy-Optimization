@@ -6,10 +6,11 @@ from datetime import datetime
 import torch
 import numpy as np
 
-import gym
-import roboschool
+from mlagents_envs.environment import UnityEnvironment
+from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
 
 from PPO import PPO
+from utils import env_reset, env_next_step
 
 
 #################################### Testing ###################################
@@ -33,7 +34,9 @@ def test():
     # max_ep_len = 1500           # max timesteps in one episode
     # action_std = 0.1            # set same std for action distribution which was used while saving
 
-    env_name = "RoboschoolWalker2d-v1"
+    env_name = "taeho-car-13"
+    env_path = f"./{env_name}"
+    
     has_continuous_action_space = True
     max_ep_len = 1000           # max timesteps in one episode
     action_std = 0.1            # set same std for action distribution which was used while saving
@@ -52,16 +55,24 @@ def test():
 
     #####################################################
 
-    env = gym.make(env_name)
+    # Unity Environment
+    engine_configuration_channel = EngineConfigurationChannel()
+    env = UnityEnvironment(file_name=env_path, side_channels=[engine_configuration_channel], seed=args.seed)
+    env.reset()
+    
+    # Unity Brain
+    behavior_name = list(env.behavior_specs.keys())[0]
+    spec = env.behavior_specs[behavior_name]
+    engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
 
     # state space dimension
-    state_dim = env.observation_space.shape[0]
+    state_dim = spec.observation_specs[0].shape[0]
 
     # action space dimension
     if has_continuous_action_space:
-        action_dim = env.action_space.shape[0]
+        action_dim = spec.action_spec.continuous_size
     else:
-        action_dim = env.action_space.n
+        action_dim = spec.action_spec.discrete_size
 
     # initialize a PPO agent
     ppo_agent = PPO(state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip, has_continuous_action_space, action_std)
@@ -83,16 +94,16 @@ def test():
 
     for ep in range(1, total_test_episodes+1):
         ep_reward = 0
-        state = env.reset()
+        state = env_reset(env, behavior_name)
 
         for t in range(1, max_ep_len+1):
             action = ppo_agent.select_action(state)
-            state, reward, done, _ = env.step(action)
+            state, reward, done, _ = env_next_step(env, behavior_name, action)
             ep_reward += reward
 
-            if render:
-                env.render()
-                time.sleep(frame_delay)
+            # if render:
+            #     env.render()
+            #     time.sleep(frame_delay)
 
             if done:
                 break

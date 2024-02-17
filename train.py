@@ -6,17 +6,19 @@ from datetime import datetime
 import torch
 import numpy as np
 
-import gym
-import roboschool
+from mlagents_envs.environment import UnityEnvironment
+from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
 
 from PPO import PPO
+from utils import env_reset, env_next_step
 
 ################################### Training ###################################
 def train():
     print("============================================================================================")
 
     ####### initialize environment hyperparameters ######
-    env_name = "RoboschoolWalker2d-v1"
+    env_name = "taeho-car-13"
+    env_path = f"./{env_name}"
 
     has_continuous_action_space = True  # continuous action space; else discrete
 
@@ -49,17 +51,25 @@ def train():
     #####################################################
 
     print("training environment name : " + env_name)
-
-    env = gym.make(env_name)
+    
+    # Unity Environment
+    engine_configuration_channel = EngineConfigurationChannel()
+    env = UnityEnvironment(file_name=env_path, side_channels=[engine_configuration_channel], seed=args.seed)
+    env.reset()
+    
+    # Unity Brain
+    behavior_name = list(env.behavior_specs.keys())[0]
+    spec = env.behavior_specs[behavior_name]
+    engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
 
     # state space dimension
-    state_dim = env.observation_space.shape[0]
+    state_dim = spec.observation_specs[0].shape[0]
 
     # action space dimension
     if has_continuous_action_space:
-        action_dim = env.action_space.shape[0]
+        action_dim = spec.action_spec.continuous_size
     else:
-        action_dim = env.action_space.n
+        action_dim = spec.action_spec.discrete_size
 
     ###################### logging ######################
 
@@ -167,14 +177,14 @@ def train():
     # training loop
     while time_step <= max_training_timesteps:
 
-        state = env.reset()
+        state = env_reset(env, behavior_name)
         current_ep_reward = 0
 
         for t in range(1, max_ep_len+1):
 
             # select action with policy
             action = ppo_agent.select_action(state)
-            state, reward, done, _ = env.step(action)
+            state, reward, done = env_next_step(env, behavior_name, action)
 
             # saving reward and is_terminals
             ppo_agent.buffer.rewards.append(reward)
@@ -253,9 +263,4 @@ if __name__ == '__main__':
 
     train()
     
-    
-    
-    
-    
-    
-    
+
