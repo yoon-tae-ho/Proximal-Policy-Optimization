@@ -54,7 +54,7 @@ def train():
     
     # Unity Environment
     engine_configuration_channel = EngineConfigurationChannel()
-    env = UnityEnvironment(file_name=env_path, side_channels=[engine_configuration_channel], seed=args.seed)
+    env = UnityEnvironment(file_name=env_path, side_channels=[engine_configuration_channel], seed=random_seed)
     env.reset()
     
     # Unity Brain
