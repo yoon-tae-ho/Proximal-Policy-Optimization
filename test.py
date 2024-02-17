@@ -97,6 +97,7 @@ def test():
 
         for t in range(1, max_ep_len+1):
             action = ppo_agent.select_action(state)
+            action = np.expand_dims(action, axis=0)
             state, reward, done = env_next_step(env, behavior_name, action)
             
             reward = np.squeeze(reward, axis=0)
