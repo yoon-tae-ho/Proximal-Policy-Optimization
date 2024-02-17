@@ -12,6 +12,8 @@ from mlagents_envs.side_channel.engine_configuration_channel import EngineConfig
 from PPO import PPO
 from utils import env_reset, env_next_step
 
+random_seed = 0             #### set this to load a particular checkpoint trained on random seed
+run_num_pretrained = 0      #### set this to load a particular checkpoint num
 
 #################################### Testing ###################################
 def test():
@@ -57,7 +59,7 @@ def test():
 
     # Unity Environment
     engine_configuration_channel = EngineConfigurationChannel()
-    env = UnityEnvironment(file_name=env_path, side_channels=[engine_configuration_channel], seed=args.seed)
+    env = UnityEnvironment(file_name=env_path, side_channels=[engine_configuration_channel], seed=random_seed)
     env.reset()
     
     # Unity Brain
@@ -78,9 +80,6 @@ def test():
     ppo_agent = PPO(state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip, has_continuous_action_space, action_std)
 
     # preTrained weights directory
-
-    random_seed = 0             #### set this to load a particular checkpoint trained on random seed
-    run_num_pretrained = 0      #### set this to load a particular checkpoint num
 
     directory = "PPO_preTrained" + '/' + env_name + '/'
     checkpoint_path = directory + "PPO_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
