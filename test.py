@@ -65,7 +65,7 @@ def test():
     # Unity Brain
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
-    engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
+    engine_configuration_channel.set_configuration_parameters(time_scale=1.0, target_frame_rate=60)
 
     # state space dimension
     state_dim = spec.observation_specs[0].shape[0]

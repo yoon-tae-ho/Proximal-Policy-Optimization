@@ -12,6 +12,8 @@ from mlagents_envs.side_channel.engine_configuration_channel import EngineConfig
 from PPO import PPO
 from utils import env_reset, env_next_step
 
+run_num_pretrained = 0      #### change this to prevent overwriting weights in same env_name folder
+
 ################################### Training ###################################
 def train():
     print("============================================================================================")
@@ -95,8 +97,6 @@ def train():
     #####################################################
 
     ################### checkpointing ###################
-    run_num_pretrained = 0      #### change this to prevent overwriting weights in same env_name folder
-
     directory = "PPO_preTrained"
     if not os.path.exists(directory):
           os.makedirs(directory)
