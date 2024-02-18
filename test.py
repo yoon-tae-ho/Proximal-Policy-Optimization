@@ -36,7 +36,7 @@ def test():
     # max_ep_len = 1500           # max timesteps in one episode
     # action_std = 0.1            # set same std for action distribution which was used while saving
 
-    env_name = "taeho-car-13"
+    env_name = "young-car"
     env_path = f"./{env_name}"
     
     has_continuous_action_space = True

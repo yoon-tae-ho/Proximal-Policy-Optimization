@@ -19,13 +19,13 @@ def train():
     print("============================================================================================")
 
     ####### initialize environment hyperparameters ######
-    env_name = "taeho-car-14"
+    env_name = "young-car"
     env_path = f"./{env_name}"
 
     has_continuous_action_space = True  # continuous action space; else discrete
 
-    max_ep_len = 1000                   # max timesteps in one episode
-    max_training_timesteps = int(3e6)   # break training loop if timeteps > max_training_timesteps
+    max_ep_len = 5000                   # max timesteps in one episode
+    max_training_timesteps = int(1e9)   # break training loop if timeteps > max_training_timesteps
 
     print_freq = max_ep_len * 10        # print avg reward in the interval (in num timesteps)
     log_freq = max_ep_len * 2           # log avg reward in the interval (in num timesteps)
@@ -62,7 +62,7 @@ def train():
     # Unity Brain
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
-    engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
+    engine_configuration_channel.set_configuration_parameters(time_scale=1.5)
 
     # state space dimension
     state_dim = spec.observation_specs[0].shape[0]
@@ -153,6 +153,14 @@ def train():
 
     # initialize a PPO agent
     ppo_agent = PPO(state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip, has_continuous_action_space, action_std)
+
+    # preTrained weights directory
+
+    directory = "PPO_preTrained" + '/' + env_name + '/'
+    checkpoint_path = directory + "PPO_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
+    print("loading network from : " + checkpoint_path)
+
+    ppo_agent.load(checkpoint_path)
 
     # track total training time
     start_time = datetime.now().replace(microsecond=0)
