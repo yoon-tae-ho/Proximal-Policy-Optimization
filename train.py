@@ -12,7 +12,8 @@ from mlagents_envs.side_channel.engine_configuration_channel import EngineConfig
 from PPO import PPO
 from utils import env_reset, env_next_step
 
-run_num_pretrained = 0      #### change this to prevent overwriting weights in same env_name folder
+load_run_num_pretrained = 0      #### change this to prevent overwriting weights in same env_name folder
+save_run_num_pretrained = 1      #### change this to prevent overwriting weights in same env_name folder
 
 ################################### Training ###################################
 def train():
@@ -62,7 +63,7 @@ def train():
     # Unity Brain
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
-    engine_configuration_channel.set_configuration_parameters(time_scale=1.5)
+    engine_configuration_channel.set_configuration_parameters(time_scale=3.0)
 
     # state space dimension
     state_dim = spec.observation_specs[0].shape[0]
@@ -106,8 +107,8 @@ def train():
           os.makedirs(directory)
 
 
-    checkpoint_path = directory + "PPO_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
-    print("save checkpoint path : " + checkpoint_path)
+    save_checkpoint_path = directory + "PPO_{}_{}_{}.pth".format(env_name, random_seed, save_run_num_pretrained)
+    print("save checkpoint path : " + save_checkpoint_path)
     #####################################################
 
 
@@ -157,10 +158,10 @@ def train():
     # preTrained weights directory
 
     directory = "PPO_preTrained" + '/' + env_name + '/'
-    checkpoint_path = directory + "PPO_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
-    print("loading network from : " + checkpoint_path)
+    load_checkpoint_path = directory + "PPO_{}_{}_{}.pth".format(env_name, random_seed, load_run_num_pretrained)
+    print("loading network from : " + load_checkpoint_path)
 
-    ppo_agent.load(checkpoint_path)
+    ppo_agent.load(load_checkpoint_path)
 
     # track total training time
     start_time = datetime.now().replace(microsecond=0)
@@ -240,8 +241,8 @@ def train():
             # save model weights
             if time_step % save_model_freq == 0:
                 print("--------------------------------------------------------------------------------------------")
-                print("saving model at : " + checkpoint_path)
-                ppo_agent.save(checkpoint_path)
+                print("saving model at : " + save_checkpoint_path)
+                ppo_agent.save(save_checkpoint_path)
                 print("model saved")
                 print("Elapsed Time  : ", datetime.now().replace(microsecond=0) - start_time)
                 print("--------------------------------------------------------------------------------------------")
