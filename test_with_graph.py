@@ -15,7 +15,7 @@ def test():
 
     # 하이퍼파라미터 설정
     has_continuous_action_space = True
-    max_ep_len = 1000
+    max_ep_len = 5000
     action_std = 0.1
     total_test_episodes = 3
     K_epochs = 80
