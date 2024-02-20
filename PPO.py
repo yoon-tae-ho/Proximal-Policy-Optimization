@@ -1,7 +1,8 @@
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.distributions import MultivariateNormal
 from torch.distributions import Categorical
+import torch.onnx
 
 ################################## set device ##################################
 print("============================================================================================")
@@ -80,8 +81,18 @@ class ActorCritic(nn.Module):
             print("WARNING : Calling ActorCritic::set_action_std() on discrete action space policy")
             print("--------------------------------------------------------------------------------------------")
 
-    def forward(self):
-        raise NotImplementedError
+    def forward(self, state):
+        if self.has_continuous_action_space:
+            action_mean = self.actor(state)
+            cov_mat = torch.diag(self.action_var).unsqueeze(dim=0)
+            dist = MultivariateNormal(action_mean, cov_mat)
+        else:
+            action_probs = self.actor(state)
+            dist = Categorical(action_probs)
+
+        action = dist.sample()
+
+        return action.detach()
     
     def act(self, state):
 
@@ -125,6 +136,8 @@ class PPO:
     def __init__(self, state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip, has_continuous_action_space, action_std_init=0.6):
 
         self.has_continuous_action_space = has_continuous_action_space
+        self.state_dim = state_dim
+        self.action_dim = action_dim
 
         if has_continuous_action_space:
             self.action_std = action_std_init
@@ -252,12 +265,30 @@ class PPO:
     
     def save(self, checkpoint_path):
         torch.save(self.policy_old.state_dict(), checkpoint_path)
-   
+
     def load(self, checkpoint_path):
         self.policy_old.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
         self.policy.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
         
+    def set_eval_mode(self):
+        self.policy_old.eval()
+        self.policy.eval()
         
-       
-
-
+    def set_train_mode(self):
+        self.policy_old.train()
+        self.policy.train()
+        
+    def save_onnx(self, onnx_path):
+        self.set_eval_mode()
+        
+        # dummy_input = torch.randn(self.state_dim)
+        dummy_input = torch.FloatTensor([[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]])
+        
+        torch.onnx.export(self.policy_old,              # 실행될 모델
+                            dummy_input,                # 모델 입력값 (튜플 또는 여러 입력값들도 가능)
+                            onnx_path,                  # 모델 저장 경로 (파일 또는 파일과 유사한 객체 모두 가능)
+                            export_params=True,         # 모델 파일 안에 학습된 모델 가중치를 저장할지의 여부
+                            opset_version=11,           # 모델을 변환할 때 사용할 ONNX 버전
+                            do_constant_folding=True,   # 최적화시 상수폴딩을 사용할지의 여부
+                            input_names = ['states'],   # 모델의 입력값을 가리키는 이름
+                            output_names = ['actions']) # 모델의 출력값을 가리키는 이름
